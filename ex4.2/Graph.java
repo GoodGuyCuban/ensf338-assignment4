@@ -20,7 +20,7 @@ public class Graph {
 
         GraphNode g = graph.getAdjacencyList().keySet().iterator().next();
         System.out.println("Finding shortest paths from node " + g.getData() + "...");
-        graph.slowSP(g);
+        graph.fastSP(g);
     }
 
     /**
@@ -94,6 +94,53 @@ public class Graph {
      * @param g
      */
     public void fastSP(GraphNode g) {
+        // Create a map of distances from the given node to all other nodes
+        Map<GraphNode, Integer> distances = new HashMap<>();
+        // Set the distance from the given node to all other nodes to infinity
+        for (GraphNode node : adjacencyList.keySet()) {
+            distances.put(node, Integer.MAX_VALUE);
+        }
+        // Set the distance from the given node to itself to 0
+        distances.put(g, 0);
+
+        // Create a priority queue of nodes sorted by distance from the given node
+        PriorityQueue<GraphNode> queue = new PriorityQueue<>(new Comparator<GraphNode>() {
+            @Override
+            public int compare(GraphNode o1, GraphNode o2) {
+                return distances.get(o1) - distances.get(o2);
+            }
+        });
+        queue.addAll(adjacencyList.keySet()); // Add all nodes to the queue
+
+        while (!queue.isEmpty()) {
+            GraphNode current = queue.poll(); // Get the node with the smallest distance
+
+            if (current == null || distances.get(current) == Integer.MAX_VALUE) {
+                // If the current node is null or has an infinite distance, then there are
+                // no more unvisited connected nodes, so we can stop.
+                break;
+            }
+
+            // Check all unvisited neighbours of the current node
+            for (Edge edge : adjacencyList.get(current)) {
+                GraphNode other = edge.getOtherEndpoint(current);
+                // If the neighbour is unvisited, update its distance
+                if (queue.contains(other)) {
+                    int weight = edge.getWeight() + distances.get(current);
+                    if (weight < distances.get(other)) {
+                        distances.put(other, weight);
+                        queue.remove(other);
+                        queue.add(other);
+                    }
+                }
+            }
+        }
+
+        // Print the distances from the given node to all other nodes
+        for (GraphNode node : distances.keySet()) {
+            System.out.println("Distance from " + g.getData() + " to " + node.getData() +
+                    ": " + distances.get(node));
+        }
     }
 
     public Map<GraphNode, List<Edge>> getAdjacencyList() {
