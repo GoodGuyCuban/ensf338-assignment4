@@ -3,6 +3,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 
+import com.github.sh0nk.matplotlib4j.Plot;
+
 /**
  * A Graph class used to describe an undirected graph.
  * Internally stores edges as an adjacency list.
@@ -18,9 +20,7 @@ public class Graph {
         }
         System.out.println("Graph imported successfully.");
 
-        GraphNode g = graph.getAdjacencyList().keySet().iterator().next();
-        System.out.println("Finding shortest paths from node " + g.getData() + "...");
-        graph.fastSP(g);
+        graph.timeExecution();
     }
 
     /**
@@ -78,12 +78,6 @@ public class Graph {
                 break;
             }
         }
-
-        // Print the distances from the given node to all other nodes
-        for (GraphNode node : distances.keySet()) {
-            System.out.println("Distance from " + g.getData() + " to " + node.getData() +
-                    ": " + distances.get(node));
-        }
     }
 
     /**
@@ -110,7 +104,7 @@ public class Graph {
                 return distances.get(o1) - distances.get(o2);
             }
         });
-        queue.addAll(adjacencyList.keySet()); // Add all nodes to the queue
+        queue.add(g); // Add the source node to the queue
 
         while (!queue.isEmpty()) {
             GraphNode current = queue.poll(); // Get the node with the smallest distance
@@ -124,27 +118,93 @@ public class Graph {
             // Check all unvisited neighbours of the current node
             for (Edge edge : adjacencyList.get(current)) {
                 GraphNode other = edge.getOtherEndpoint(current);
-                // If the neighbour is unvisited, update its distance
-                if (queue.contains(other)) {
-                    int weight = edge.getWeight() + distances.get(current);
-                    if (weight < distances.get(other)) {
-                        distances.put(other, weight);
-                        queue.remove(other);
-                        queue.add(other);
-                    }
+                int weight = edge.getWeight() + distances.get(current);
+                if (weight < distances.get(other)) {
+                    distances.put(other, weight);
+                    queue.add(other);
                 }
             }
-        }
-
-        // Print the distances from the given node to all other nodes
-        for (GraphNode node : distances.keySet()) {
-            System.out.println("Distance from " + g.getData() + " to " + node.getData() +
-                    ": " + distances.get(node));
         }
     }
 
     public Map<GraphNode, List<Edge>> getAdjacencyList() {
         return adjacencyList;
+    }
+
+    /**
+     * Times the execution of the slow and fast implementations of Dijkstra's
+     * algorithm for each node in the graph.
+     */
+    public void timeExecution() {
+        Iterator<GraphNode> it = adjacencyList.keySet().iterator();
+        List<Double> slowTimes = new ArrayList<>(adjacencyList.size());
+        List<Double> fastTimes = new ArrayList<>(adjacencyList.size());
+        while (it.hasNext()) {
+            GraphNode node = it.next();
+
+            long start = System.nanoTime();
+            slowSP(node);
+            long end = System.nanoTime();
+            slowTimes.add((double) (end - start) / 1_000_000);
+
+            start = System.nanoTime();
+            fastSP(node);
+            end = System.nanoTime();
+            fastTimes.add((double) (end - start) / 1_000_000);
+        }
+
+        // Calculate the average, max, and min times for each implementation
+        double slowAvg = 0;
+        double slowMax = 0;
+        double slowMin = Double.MAX_VALUE;
+        double fastAvg = 0;
+        double fastMax = 0;
+        double fastMin = Double.MAX_VALUE;
+        for (int i = 0; i < slowTimes.size(); i++) {
+            slowAvg += slowTimes.get(i);
+            slowMax = Math.max(slowMax, slowTimes.get(i));
+            slowMin = Math.min(slowMin, slowTimes.get(i));
+            fastAvg += fastTimes.get(i);
+            fastMax = Math.max(fastMax, fastTimes.get(i));
+            fastMin = Math.min(fastMin, fastTimes.get(i));
+        }
+        slowAvg /= slowTimes.size();
+        fastAvg /= fastTimes.size();
+
+        System.out.println("\nSlow implementation:");
+        System.out.println("Average time: " + slowAvg + "ms");
+        System.out.println("Max time: " + slowMax + "ms");
+        System.out.println("Min time: " + slowMin + "ms");
+
+        System.out.println("\nFast implementation:");
+        System.out.println("Average time: " + fastAvg + "ms");
+        System.out.println("Max time: " + fastMax + "ms");
+        System.out.println("Min time: " + fastMin + "ms");
+
+        plotExecutionTimes(slowTimes, fastTimes);
+    }
+
+    /**
+     * Plots the execution times of the slow and fast implementations of Dijkstra's
+     * algorithm.
+     * 
+     * @param slowTimes The execution times of the slow implementation.
+     * @param fastTimes The execution times of the fast implementation.
+     */
+    public void plotExecutionTimes(List<? extends Number> slowTimes, List<? extends Number> fastTimes) {
+        // Create a histogram of the execution times
+        Plot plt = Plot.create();
+
+        // TODO: Finalize plotting
+        plt.hist().add(slowTimes).add(fastTimes).bins(100).log(true);
+        plt.legend();
+        // plt.xlim(0, 20);
+        try {
+            plt.savefig("plot.png");
+            plt.show();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public Graph() {
