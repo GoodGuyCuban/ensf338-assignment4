@@ -154,29 +154,31 @@ public class Graph {
         }
 
         // Calculate the average, max, and min times for each implementation
-        double slowAvg = 0;
+        double slowTotal = 0;
         double slowMax = 0;
         double slowMin = Double.MAX_VALUE;
-        double fastAvg = 0;
+        double fastTotal = 0;
         double fastMax = 0;
         double fastMin = Double.MAX_VALUE;
         for (int i = 0; i < slowTimes.size(); i++) {
-            slowAvg += slowTimes.get(i);
+            slowTotal += slowTimes.get(i);
             slowMax = Math.max(slowMax, slowTimes.get(i));
             slowMin = Math.min(slowMin, slowTimes.get(i));
-            fastAvg += fastTimes.get(i);
+            fastTotal += fastTimes.get(i);
             fastMax = Math.max(fastMax, fastTimes.get(i));
             fastMin = Math.min(fastMin, fastTimes.get(i));
         }
-        slowAvg /= slowTimes.size();
-        fastAvg /= fastTimes.size();
+        double slowAvg = slowTotal / slowTimes.size();
+        double fastAvg = fastTotal / fastTimes.size();
 
         System.out.println("\nSlow implementation:");
+        System.out.println("Total time: " + slowTotal + "ms");
         System.out.println("Average time: " + slowAvg + "ms");
         System.out.println("Max time: " + slowMax + "ms");
         System.out.println("Min time: " + slowMin + "ms");
 
         System.out.println("\nFast implementation:");
+        System.out.println("Total time: " + fastTotal + "ms");
         System.out.println("Average time: " + fastAvg + "ms");
         System.out.println("Max time: " + fastMax + "ms");
         System.out.println("Min time: " + fastMin + "ms");
@@ -196,7 +198,6 @@ public class Graph {
         Plot plt = Plot.create();
 
         plt.hist().add(slowTimes).add(fastTimes).bins(100).log(true);
-        plt.legend();
         try {
             plt.savefig("plot.png");
             plt.show();
