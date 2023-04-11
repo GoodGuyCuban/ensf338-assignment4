@@ -195,10 +195,8 @@ public class Graph {
         // Create a histogram of the execution times
         Plot plt = Plot.create();
 
-        // TODO: Finalize plotting
         plt.hist().add(slowTimes).add(fastTimes).bins(100).log(true);
         plt.legend();
-        // plt.xlim(0, 20);
         try {
             plt.savefig("plot.png");
             plt.show();
